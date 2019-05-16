@@ -15,7 +15,7 @@ public class DHCPServer {
 
         public DHCPServer() {
                 //System.out.println("Opening UDP Socket On Port: " + listenPort);
-
+          
                 DatagramSocket socket = null;
                 try {
                         
@@ -35,6 +35,7 @@ public class DHCPServer {
                                 System.out.println("Connection established from " + p.getAddress());
                         
                                 System.out.println("Data Received: " + Arrays.toString(p.getData()));
+                                DHCP.DHCPMessage mensaje = new DHCP.DHCPMessage(p.getData(), p.getLength());
                         }
                 } catch (SocketException e) {
                         // TODO Auto-generated catch block

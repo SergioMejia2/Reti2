@@ -73,14 +73,6 @@ public class DHCPOptions {
 			printOption(option[0]);
 		}
 	}
-	
-	
-
-	public static void main (String[] args) {
-		DHCPOptions test = new DHCPOptions();
-	
-		//test.printOptions();
-	}
 
 	public byte[] externalize() {
 		

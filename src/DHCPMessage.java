@@ -2,6 +2,8 @@ package DHCP;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * This class represents a DHCP application level message packet 
@@ -86,6 +88,52 @@ public class DHCPMessage {
 
 		this.printMessage();
 	}
+        
+        public DHCPMessage(byte[] message, int length)
+        {
+            cIAddr = new byte[4];
+            yIAddr = new byte[4];
+            sIAddr = new byte[4];
+            gIAddr = new byte[4];
+            cHAddr = new byte[16];
+            sName = new byte[64];
+            file = new byte[128];
+            options = new DHCPOptions();
+            
+            op = message[0];
+            hType = message[1];
+            hLen = message[2];
+            hops = message[3];
+            ByteBuffer wrapped = ByteBuffer.wrap(Arrays.copyOfRange(message, 4, 8));
+            xid = wrapped.getInt();
+            wrapped = ByteBuffer.wrap(Arrays.copyOfRange(message, 8, 10));
+            secs = wrapped.getShort();
+            wrapped = ByteBuffer.wrap(Arrays.copyOfRange(message, 10, 12));
+            flags = wrapped.getShort();
+            cIAddr = Arrays.copyOfRange(message, 12, 16);
+            yIAddr = Arrays.copyOfRange(message, 16, 20);
+            sIAddr = Arrays.copyOfRange(message, 20, 24);
+            gIAddr = Arrays.copyOfRange(message, 24, 28);
+            cHAddr = Arrays.copyOfRange(message, 28, 44);
+            sName = Arrays.copyOfRange(message, 44, 108);
+            file = Arrays.copyOfRange(message, 108, 236);
+            
+            int i = 236;
+            while(i < length)
+            {
+                byte opNumber;
+                byte opLength;
+                byte[] opData;
+                opNumber = message[i];
+                i++;
+                opLength = message[i];
+                i++;
+                opData = Arrays.copyOfRange(message, i, i+opLength); 
+                i += opLength;
+                options.setOption((int)opNumber, opData);
+            }
+
+        }
 	
 	public byte[] discoverMsg(byte[] cMacAddress) {
 		op = DHCPREQUEST;
