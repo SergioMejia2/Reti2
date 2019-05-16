@@ -1,3 +1,5 @@
+package DHCP;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -36,6 +38,7 @@ public class DHCPServer {
                         
                                 System.out.println("Data Received: " + Arrays.toString(p.getData()));
                                 DHCP.DHCPMessage mensaje = new DHCP.DHCPMessage(p.getData(), p.getLength());
+                                System.out.println(mensaje);
                         }
                 } catch (SocketException e) {
                         // TODO Auto-generated catch block

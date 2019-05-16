@@ -4,6 +4,10 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Hashtable;
+import DHCP.DHCPOption;
+import java.util.Map;
+
 
 /**
  * This class represents a DHCP application level message packet 
@@ -71,8 +75,11 @@ public class DHCPMessage {
 	//Boot Filename: (1024-bit : 128 bytes)
 	private byte[] file;
 	
+        private byte[] magicCookie;
+        
 	//Options: (variable)
-	private DHCPOptions options;
+	private Hashtable<Byte,DHCPOption> options;
+        
 	
 	
 
@@ -84,8 +91,7 @@ public class DHCPMessage {
 		cHAddr = new byte[16];
 		sName = new byte[64];
 		file = new byte[128];
-		options = new DHCPOptions();
-
+		options = new Hashtable<Byte,DHCPOption>();
 		this.printMessage();
 	}
         
@@ -98,8 +104,8 @@ public class DHCPMessage {
             cHAddr = new byte[16];
             sName = new byte[64];
             file = new byte[128];
-            options = new DHCPOptions();
-            
+            options = new Hashtable<Byte,DHCPOption>();
+
             op = message[0];
             hType = message[1];
             hLen = message[2];
@@ -117,20 +123,25 @@ public class DHCPMessage {
             cHAddr = Arrays.copyOfRange(message, 28, 44);
             sName = Arrays.copyOfRange(message, 44, 108);
             file = Arrays.copyOfRange(message, 108, 236);
+            magicCookie = Arrays.copyOfRange(message, 236, 240);
+            int i = 240;
             
-            int i = 236;
             while(i < length)
             {
                 byte opNumber;
-                byte opLength;
+                byte opLength; //0-255
                 byte[] opData;
                 opNumber = message[i];
                 i++;
                 opLength = message[i];
                 i++;
-                opData = Arrays.copyOfRange(message, i, i+opLength); 
-                i += opLength;
-                options.setOption((int)opNumber, opData);
+                
+                int longi = opLength & 0xff;
+               
+                opData = Arrays.copyOfRange(message, i, i+longi); 
+                i += longi;
+                DHCPOption opcion = new DHCPOption(opLength, opData);
+                options.put(opNumber, opcion);
             }
 
         }
@@ -169,7 +180,7 @@ public class DHCPMessage {
 	 */
 	public byte[] externalize() {
 		int staticSize = 236;
-		byte[] options = this.options.externalize();
+		byte[] options = externalizeOptions();
 		int size = staticSize + options.length;
 		byte[] msg = new byte[size];
 		
@@ -311,7 +322,7 @@ public class DHCPMessage {
 	}
 
 	public byte[] getOptions() {
-		return options.externalize();
+		return externalizeOptions();
 	}
 
 	//no set options yet...
@@ -337,7 +348,7 @@ public class DHCPMessage {
 		msg += Short.toString(flags) + "\n";
 		msg += cIAddr.toString() + "\n";
 		msg += yIAddr.toString() + "\n";
-	    msg += sIAddr.toString() + "\n";
+                msg += sIAddr.toString() + "\n";
 		 msg += gIAddr.toString() + "\n";
 		msg += cHAddr.toString() + "\n";
 		msg += sName.toString() + "\n";
@@ -369,5 +380,32 @@ public class DHCPMessage {
 		b[1] = (byte) (i & 0x00FF);
 		return b;
 	}
+
+    public byte[] externalizeOptions()
+    {
+        int tam = 0;
+        for (Map.Entry<Byte, DHCPOption> entrySet : this.options.entrySet())
+        {
+            DHCPOption value = entrySet.getValue();
+            tam += 2+value.getOpLength();
+        }
+        byte[] options = new byte[tam];
+        int i = 0;
+        for (Map.Entry<Byte, DHCPOption> entrySet : this.options.entrySet())
+        {
+            Byte key = entrySet.getKey();
+            DHCPOption value = entrySet.getValue();
+            options[i] = key;
+            i++;
+            options[i] = value.getOpLength();
+            i++;
+            for(int j = 0; j < value.getOpLength(); j++)
+            {
+                options[i] = value.getOpData()[j];
+                i++;
+            }
+        }
+        return options;
+    }
 	
 }
