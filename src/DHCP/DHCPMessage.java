@@ -179,7 +179,7 @@ public class DHCPMessage {
 	 * @return  a byte array with   information from DHCPMessage object.
 	 */
 	public byte[] externalize() {
-		int staticSize = 236;
+		int staticSize = 240;
 		byte[] options = externalizeOptions();
 		int size = staticSize + options.length;
 		byte[] msg = new byte[size];
@@ -192,9 +192,9 @@ public class DHCPMessage {
 		msg[3] = this.hops;
 		
 		//add multibytes
-		for (int i=0; i < 4; i++) msg[4+i] = inttobytes(xid)[i];
-		for (int i=0; i < 2; i++) msg[8+i] = shorttobytes(secs)[i];
-		for (int i=0; i < 2; i++) msg[10+i] = shorttobytes(flags)[i];
+		for (int i=0; i < 4; i++) msg[4+i] = Utils.Utils.intToBytes(xid)[i];
+		for (int i=0; i < 2; i++) msg[8+i] = Utils.Utils.shortToByte(secs)[i];
+		for (int i=0; i < 2; i++) msg[10+i] = Utils.Utils.shortToByte(flags)[i];
 		for (int i=0; i < 4; i++) msg[12+i] = cIAddr[i];
 		for (int i=0; i < 4; i++) msg[16+i] = yIAddr[i];
 		for (int i=0; i < 4; i++) msg[20+i] = sIAddr[i];
@@ -202,7 +202,7 @@ public class DHCPMessage {
 		for (int i=0; i < 16; i++) msg[28+i] = cHAddr[i];
 		for (int i=0; i < 64; i++) msg[44+i] = sName[i];
 		for (int i=0; i < 128; i++) msg[108+i] = file[i];
-		
+		for (int i=0; i < 4; i++) msg[236+i] = magicCookie[i];
 		//add options
 		for (int i=0; i < options.length; i++) msg[staticSize+i] = options[i];
       
@@ -346,15 +346,15 @@ public class DHCPMessage {
 		msg += Integer.toString(xid) + "\n";
 		msg += Short.toString(secs) + "\n";
 		msg += Short.toString(flags) + "\n";
-		msg += cIAddr.toString() + "\n";
-		msg += yIAddr.toString() + "\n";
-                msg += sIAddr.toString() + "\n";
-		 msg += gIAddr.toString() + "\n";
-		msg += cHAddr.toString() + "\n";
-		msg += sName.toString() + "\n";
-		 msg += file.toString() + "\n";
+		msg += Utils.Utils.bytesToString(cIAddr) + "\n";
+		msg += Utils.Utils.bytesToString(yIAddr) + "\n";
+                msg += Utils.Utils.bytesToString(sIAddr) + "\n";
+		 msg += Utils.Utils.bytesToString(gIAddr) + "\n";
+		msg += Utils.Utils.bytesToString(cHAddr) + "\n";
+		msg += Utils.Utils.bytesToString(sName) + "\n";
+		 msg += Utils.Utils.bytesToString(file) + "\n";
 		 
-		 msg += options.toString() + "\n";
+		 msg += optionsToString() + "\n";
 		
 		//add options
 		 assert(file != null);
@@ -365,22 +365,7 @@ public class DHCPMessage {
 		return msg;
 	}
 	
-	private byte[] inttobytes(int i){
-		byte[] dword = new byte[4];
-		dword[0] = (byte) ((i >> 24) & 0x000000FF);
-		dword[1] = (byte) ((i >> 16) & 0x000000FF);
-		dword[2] = (byte) ((i >> 8) & 0x000000FF);
-		dword[3] = (byte) (i & 0x00FF);
-		return dword;
-	}
 	
-	private byte[] shorttobytes(short i){
-		byte[] b = new byte[2];
-		b[0] = (byte) ((i >> 8) & 0x000000FF);
-		b[1] = (byte) (i & 0x00FF);
-		return b;
-	}
-
     public byte[] externalizeOptions()
     {
         int tam = 0;
@@ -406,6 +391,20 @@ public class DHCPMessage {
             }
         }
         return options;
+    }
+
+    private String optionsToString()
+    {
+        String retorno = new String();
+        for (Map.Entry<Byte, DHCPOption> entry : options.entrySet()) {
+            Byte key = entry.getKey();
+            DHCPOption value = entry.getValue();
+            int llave = key & (0xff);
+            retorno += "Option N° "+llave+"\n";
+            retorno += "Length: "+value.getOpLength()+"\n";
+            retorno += "Data: "+Utils.Utils.bytesToString(value.getOpData())+"\n\n";
+        }
+        return retorno;
     }
 	
 }

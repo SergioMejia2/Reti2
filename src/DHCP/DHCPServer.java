@@ -24,7 +24,7 @@ public class DHCPServer {
                         socket = new DatagramSocket(listenPort);  // ipaddress? throws socket exception
 
                         byte[] payload = new byte[MAX_BUFFER_SIZE];
-                        int length = 308;
+                        int length = 576;
                         DatagramPacket p = new DatagramPacket(payload, length);
                         //System.out.println("Success! Now listening on port " + listenPort + "...");
                         System.out.println("Listening on port " + listenPort + "...");
@@ -37,7 +37,8 @@ public class DHCPServer {
                                 System.out.println("Connection established from " + p.getAddress());
                         
                                 System.out.println("Data Received: " + Arrays.toString(p.getData()));
-                                DHCP.DHCPMessage mensaje = new DHCP.DHCPMessage(p.getData(), p.getLength());
+                                DHCPMessage mensaje = new DHCP.DHCPMessage(p.getData(), p.getLength());
+                                System.out.println("Data Parsed:   "+ Arrays.toString(mensaje.externalize()));
                                 System.out.println(mensaje);
                         }
                 } catch (SocketException e) {
