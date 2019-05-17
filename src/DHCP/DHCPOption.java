@@ -12,6 +12,18 @@ package DHCP;
  */
 public class DHCPOption
 {
+    //DHCP Message Types
+    public static final int DHCPDISCOVER = 1;
+    public static final int DHCPOFFER = 2;
+    public static final int DHCPREQUEST = 3;
+    public static final int DHCPDECLINE = 4;
+    public static final int DHCPACK = 5;
+    public static final int DHCPNAK = 6;
+    public static final int DHCPRELEASE = 7;
+	
+    //DHCP Option Identifiers
+    public static final int DHCPMESSAGETYPE = 53;
+    
     private byte opLength;
     private byte[] opData;
 

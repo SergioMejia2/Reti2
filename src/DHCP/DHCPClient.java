@@ -8,6 +8,8 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DHCPClient {
 	private static final int MAX_BUFFER_SIZE = 1024; // 1024 bytes
@@ -20,9 +22,10 @@ public class DHCPClient {
 	 * DHCPServer(); }
 	 */
 
-	public DHCPClient() {
+	public DHCPClient() throws Exception {
 		System.out.println("Connecting to DHCPServer at " + serverIP + " on port " + serverPort + "...");
 
+                
 		DatagramSocket socket = null;
 		try {
 			socket = new DatagramSocket(listenPort);  // ipaddress? throws socket exception
@@ -56,11 +59,15 @@ public class DHCPClient {
 	 */
 	public static void main(String[] args) {
 		DHCPClient client;
-		/*
-		 * if (args.length >= 1) { server = new
-		 * DHCPClient(Integer.parseInt(args[0])); } else {
-		 */
-		client = new DHCPClient();
+            try {
+                /*
+                * if (args.length >= 1) { server = new
+                * DHCPClient(Integer.parseInt(args[0])); } else {
+                */
+                client = new DHCPClient();
+            } catch (Exception ex) {
+                Logger.getLogger(DHCPClient.class.getName()).log(Level.SEVERE, null, ex);
+            }
 		//DHCPMessage msgTest = new DHCPMessage();
 		printMacAddress();
 		// }

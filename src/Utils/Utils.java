@@ -37,6 +37,24 @@ public class Utils {
         
         return (sb.length() > 0 )?(sb.deleteCharAt(sb.length() - 1).toString()):(sb.toString());
     }
+    
+    public static String IPToString(byte[] arr)
+    {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : arr) {
+            int num = b & 0xff;
+            sb.append(num);
+            sb.append(".");
+        }
+        
+        return (sb.length() > 0 )?(sb.deleteCharAt(sb.length() - 1).toString()):(sb.toString());
+    }
+    
+    public static String BytesToText(byte[] arr)
+    {
+        String s = new String(arr);
+        return s;
+    }
 
     public static byte[] intToBytes(int i)
     {
@@ -46,6 +64,13 @@ public class Utils {
         dword[2] = (byte) ((i >> 8) & 0x000000FF);
         dword[3] = (byte) (i & 0x00FF);
         return dword;
+    }
+    
+    public static boolean isIpZero(byte[] ip)
+    {
+        if(ip[0] == 0 && ip[1] == 0 && ip[2] == 0 && ip[3] == 0)
+            return true;
+        return false;
     }
 
 }

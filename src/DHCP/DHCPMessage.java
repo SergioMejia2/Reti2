@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Hashtable;
 import DHCP.DHCPOption;
+import java.net.UnknownHostException;
 import java.util.Map;
 
 
@@ -81,7 +82,6 @@ public class DHCPMessage {
 	private Hashtable<Byte,DHCPOption> options;
         
 	
-	
 
 	public DHCPMessage() {
 		cIAddr = new byte[4];
@@ -145,6 +145,65 @@ public class DHCPMessage {
             }
 
         }
+        
+        public byte[] offerMsg(DHCPMessage discoverMsg) throws UnknownHostException
+        {
+            byte[] retorno = null;
+            op = DHCPREPLY;
+            hType = 1;
+            hLen = 6;
+            hops = 0;
+            xid = discoverMsg.getXid();
+            secs = 1;
+            flags = 0;
+            for(int i = 0; i < 4; i++) cIAddr[i] = 0;
+            if(discoverMsg.getOptionIn(50) != null)
+            {
+                yIAddr = discoverMsg.getOptionIn(50).getOpData();
+            }
+            else
+            {
+                yIAddr = new byte[]{(byte)192,(byte)168,(byte)43,(byte)39};
+            }
+            System.out.println("AAAAAAAAAAAAAAAA"+yIAddr.length);
+            sIAddr = InetAddress.getLocalHost().getAddress();
+            if(!Utils.Utils.isIpZero(discoverMsg.getGIAddr()))
+            {
+                gIAddr = discoverMsg.getGIAddr();
+            }
+            cHAddr = discoverMsg.getCHAddr();
+            sName = discoverMsg.getSName();
+            file = discoverMsg.getFile();
+            magicCookie = discoverMsg.getMagicCookie();
+            
+            byte[] data = {DHCPOption.DHCPOFFER};
+            DHCPOption msgType = new DHCPOption((byte)1, data );
+            options.put((byte)53, msgType);
+            
+            byte[] subnet = {(byte)0xff,(byte)0xff,(byte)0xff,(byte)0x00};
+            DHCPOption subnetMask = new DHCPOption((byte)4, subnet);
+            options.put((byte)1,subnetMask);
+            
+            byte[] gateway = gIAddr;
+            DHCPOption gatewayAddr = new DHCPOption((byte)gateway.length, gateway);
+            options.put((byte)3,gatewayAddr);
+            
+            byte[] lease = Utils.Utils.intToBytes(DHCPServer.LEASE_TIME);
+            DHCPOption leaseTime = new DHCPOption((byte)4, lease);
+            options.put((byte)51,leaseTime);
+            
+            byte[] myIp = InetAddress.getLocalHost().getAddress();
+            DHCPOption serverIp = new DHCPOption((byte)4, myIp);
+            options.put((byte)54,serverIp);
+            
+            byte[] dns = {(byte)0x08,(byte)0x08,(byte)0x08,(byte)0x08};
+            DHCPOption dnsAddr = new DHCPOption((byte)dns.length, dns);
+            options.put((byte)6,dnsAddr);
+            
+            retorno = externalize();
+            
+            return retorno;
+        }
 	
 	public byte[] discoverMsg(byte[] cMacAddress) {
 		op = DHCPREQUEST;
@@ -181,7 +240,7 @@ public class DHCPMessage {
 	public byte[] externalize() {
 		int staticSize = 240;
 		byte[] options = externalizeOptions();
-		int size = staticSize + options.length;
+		int size = staticSize + options.length+1;
 		byte[] msg = new byte[size];
 		
 		//add each field to the msg array
@@ -205,7 +264,7 @@ public class DHCPMessage {
 		for (int i=0; i < 4; i++) msg[236+i] = magicCookie[i];
 		//add options
 		for (int i=0; i < options.length; i++) msg[staticSize+i] = options[i];
-      
+                msg[size-1] = (byte)0xff;
 		return msg;
 	}
 
@@ -333,6 +392,21 @@ public class DHCPMessage {
 	public void printMessage() {
 		System.out.println(this.toString());
 	}
+        
+        public DHCPOption getOptionIn(int opNum)
+        {
+            for (Map.Entry<Byte, DHCPOption> entry : options.entrySet())
+            {
+                Byte key = entry.getKey();
+                DHCPOption value = entry.getValue();
+                int keyy = key & 0xff;
+                if(keyy == opNum)
+                {
+                    return(value);
+                }
+            }
+            return null;
+        }
 	
 	@Override
 	public String toString() {
@@ -346,10 +420,10 @@ public class DHCPMessage {
 		msg += Integer.toString(xid) + "\n";
 		msg += Short.toString(secs) + "\n";
 		msg += Short.toString(flags) + "\n";
-		msg += Utils.Utils.bytesToString(cIAddr) + "\n";
-		msg += Utils.Utils.bytesToString(yIAddr) + "\n";
-                msg += Utils.Utils.bytesToString(sIAddr) + "\n";
-		 msg += Utils.Utils.bytesToString(gIAddr) + "\n";
+		msg += Utils.Utils.IPToString(cIAddr) + "\n";
+		msg += Utils.Utils.IPToString(yIAddr) + "\n";
+                msg += Utils.Utils.IPToString(sIAddr) + "\n";
+		 msg += Utils.Utils.IPToString(gIAddr) + "\n";
 		msg += Utils.Utils.bytesToString(cHAddr) + "\n";
 		msg += Utils.Utils.bytesToString(sName) + "\n";
 		 msg += Utils.Utils.bytesToString(file) + "\n";
@@ -402,9 +476,25 @@ public class DHCPMessage {
             int llave = key & (0xff);
             retorno += "Option N° "+llave+"\n";
             retorno += "Length: "+value.getOpLength()+"\n";
-            retorno += "Data: "+Utils.Utils.bytesToString(value.getOpData())+"\n\n";
+            if(llave == 50 || llave==1 || llave==6 || llave==54)
+            {
+                retorno += "Data: "+Utils.Utils.IPToString(value.getOpData())+"\n\n"; 
+            }
+            else if(llave == 60)
+            {
+                retorno += "Data: "+Utils.Utils.BytesToText(value.getOpData())+"\n\n";
+            }
+            else
+            {
+                retorno += "Data: "+Utils.Utils.bytesToString(value.getOpData())+"\n\n";
+            }
         }
         return retorno;
+    }
+
+    public byte[] getMagicCookie()
+    {
+        return this.magicCookie;
     }
 	
 }
