@@ -18,7 +18,7 @@ public class DHCPOption
     public static final int DHCPREQUEST = 3;
     public static final int DHCPDECLINE = 4;
     public static final int DHCPACK = 5;
-    public static final int DHCPNAK = 6;
+    public static final int DHCPNACK = 6;
     public static final int DHCPRELEASE = 7;
 	
     //DHCP Option Identifiers

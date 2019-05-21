@@ -6,6 +6,7 @@
 package Utils;
 
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 
 /**
  *
@@ -71,6 +72,42 @@ public class Utils {
         if(ip[0] == 0 && ip[1] == 0 && ip[2] == 0 && ip[3] == 0)
             return true;
         return false;
+    }
+    
+    public static long  bytesToLong(byte[] ip)
+    {
+        long result = 0;
+        for(byte byt : ip)
+        {
+            result <<= 8;
+            result |= byt & 0xff;
+        }
+        return result;
+    }
+    
+    public static byte[] longToByte(long x)
+    {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(x);
+        
+        byte[] longinb = buffer.array();             
+        byte[] retorno = new byte[4];
+        for(int i = 0; i < 4; i++)
+        {
+            retorno[i] = longinb[i+4];
+        }
+        return retorno;
+    }
+
+    public static boolean isIpInRange(byte[] primerIP, byte[] ultimaIP, byte[] address)
+    {
+        long primer = bytesToLong(primerIP);
+        long ultima = bytesToLong(ultimaIP);
+        long dir = bytesToLong(address);
+        
+        if(primer <= dir && dir <= ultima)
+            return true;
+        else return false;
     }
 
 }

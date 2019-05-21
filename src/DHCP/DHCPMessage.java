@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Hashtable;
 import DHCP.DHCPOption;
+import Pool.Pool;
 import java.net.UnknownHostException;
 import java.util.Map;
 
@@ -146,7 +147,7 @@ public class DHCPMessage {
 
         }
         
-        public byte[] offerMsg(DHCPMessage discoverMsg) throws UnknownHostException
+        public byte[] offerMsg(DHCPMessage discoverMsg, Pool pool, byte[] ipAsignada) throws UnknownHostException
         {
             byte[] retorno = null;
             op = DHCPREPLY;
@@ -157,20 +158,9 @@ public class DHCPMessage {
             secs = 1;
             flags = 0;
             for(int i = 0; i < 4; i++) cIAddr[i] = 0;
-            if(discoverMsg.getOptionIn(50) != null)
-            {
-                yIAddr = discoverMsg.getOptionIn(50).getOpData();
-            }
-            else
-            {
-                yIAddr = new byte[]{(byte)192,(byte)168,(byte)43,(byte)39};
-            }
-            System.out.println("AAAAAAAAAAAAAAAA"+yIAddr.length);
+            yIAddr = ipAsignada;
             sIAddr = InetAddress.getLocalHost().getAddress();
-            if(!Utils.Utils.isIpZero(discoverMsg.getGIAddr()))
-            {
-                gIAddr = discoverMsg.getGIAddr();
-            }
+            gIAddr = pool.getGatewayIP();
             cHAddr = discoverMsg.getCHAddr();
             sName = discoverMsg.getSName();
             file = discoverMsg.getFile();
@@ -180,7 +170,7 @@ public class DHCPMessage {
             DHCPOption msgType = new DHCPOption((byte)1, data );
             options.put((byte)53, msgType);
             
-            byte[] subnet = {(byte)0xff,(byte)0xff,(byte)0xff,(byte)0x00};
+            byte[] subnet = pool.getMask();
             DHCPOption subnetMask = new DHCPOption((byte)4, subnet);
             options.put((byte)1,subnetMask);
             
@@ -196,7 +186,103 @@ public class DHCPMessage {
             DHCPOption serverIp = new DHCPOption((byte)4, myIp);
             options.put((byte)54,serverIp);
             
-            byte[] dns = {(byte)0x08,(byte)0x08,(byte)0x08,(byte)0x08};
+            byte[] dns = pool.getDNS();
+            DHCPOption dnsAddr = new DHCPOption((byte)dns.length, dns);
+            options.put((byte)6,dnsAddr);
+            
+            retorno = externalize();
+            
+            return retorno;
+        }
+        
+        public byte[] ackMsg(DHCPMessage requestMsg, Pool pool, byte[] ipAsignada) throws UnknownHostException
+        {
+            byte[] retorno = null;
+            op = DHCPREPLY;
+            hType = 1;
+            hLen = 6;
+            hops = 0;
+            xid = requestMsg.getXid();
+            secs = 3;
+            flags = 0;
+            for(int i = 0; i < 4; i++) cIAddr[i] = 0;
+            yIAddr = ipAsignada;
+            sIAddr = InetAddress.getLocalHost().getAddress();
+            gIAddr = pool.getGatewayIP();
+            cHAddr = requestMsg.getCHAddr();
+            sName = requestMsg.getSName();
+            file = requestMsg.getFile();
+            magicCookie = requestMsg.getMagicCookie();
+            
+            byte[] data = {DHCPOption.DHCPACK};
+            DHCPOption msgType = new DHCPOption((byte)1, data );
+            options.put((byte)53, msgType);
+            
+            byte[] subnet = pool.getMask();
+            DHCPOption subnetMask = new DHCPOption((byte)4, subnet);
+            options.put((byte)1,subnetMask);
+            
+            byte[] gateway = gIAddr;
+            DHCPOption gatewayAddr = new DHCPOption((byte)gateway.length, gateway);
+            options.put((byte)3,gatewayAddr);
+            
+            byte[] lease = Utils.Utils.intToBytes(DHCPServer.LEASE_TIME);
+            DHCPOption leaseTime = new DHCPOption((byte)4, lease);
+            options.put((byte)51,leaseTime);
+            
+            byte[] myIp = InetAddress.getLocalHost().getAddress();
+            DHCPOption serverIp = new DHCPOption((byte)4, myIp);
+            options.put((byte)54,serverIp);
+            
+            byte[] dns = pool.getDNS();
+            DHCPOption dnsAddr = new DHCPOption((byte)dns.length, dns);
+            options.put((byte)6,dnsAddr);
+            
+            retorno = externalize();
+            
+            return retorno;
+        }
+        
+        public byte[] nackMsg(DHCPMessage requestMsg, Pool pool) throws UnknownHostException
+        {
+            byte[] retorno = null;
+            op = DHCPREPLY;
+            hType = 1;
+            hLen = 6;
+            hops = 0;
+            xid = requestMsg.getXid();
+            secs = 3;
+            flags = 0;
+            for(int i = 0; i < 4; i++) cIAddr[i] = 0;
+            yIAddr = requestMsg.getYIAddr();
+            sIAddr = InetAddress.getLocalHost().getAddress();
+            gIAddr = pool.getGatewayIP();
+            cHAddr = requestMsg.getCHAddr();
+            sName = requestMsg.getSName();
+            file = requestMsg.getFile();
+            magicCookie = requestMsg.getMagicCookie();
+            
+            byte[] data = {DHCPOption.DHCPNACK};
+            DHCPOption msgType = new DHCPOption((byte)1, data );
+            options.put((byte)53, msgType);
+            
+            byte[] subnet = pool.getMask();
+            DHCPOption subnetMask = new DHCPOption((byte)4, subnet);
+            options.put((byte)1,subnetMask);
+            
+            byte[] gateway = gIAddr;
+            DHCPOption gatewayAddr = new DHCPOption((byte)gateway.length, gateway);
+            options.put((byte)3,gatewayAddr);
+            
+            byte[] lease = Utils.Utils.intToBytes(DHCPServer.LEASE_TIME);
+            DHCPOption leaseTime = new DHCPOption((byte)4, lease);
+            options.put((byte)51,leaseTime);
+            
+            byte[] myIp = InetAddress.getLocalHost().getAddress();
+            DHCPOption serverIp = new DHCPOption((byte)4, myIp);
+            options.put((byte)54,serverIp);
+            
+            byte[] dns = pool.getDNS();
             DHCPOption dnsAddr = new DHCPOption((byte)dns.length, dns);
             options.put((byte)6,dnsAddr);
             
