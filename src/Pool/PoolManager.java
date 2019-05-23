@@ -7,6 +7,7 @@ package Pool;
 
 import Utils.Persistencia;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  *
@@ -43,7 +44,7 @@ public class PoolManager {
         Pool found = null;
         
         for (Pool ss : this.subRedes) {
-            if(ss.getGatewayIP().equals(getw))
+            if(Arrays.equals(ss.getGatewayIP(), getw))
             {
                 found = ss;
             }
@@ -56,7 +57,7 @@ public class PoolManager {
         byte[] newIP = null;
         
         if(gateway == null){
-            throw new Exception("Esta subred no se encuentra en la topologia");
+            throw new Exception("La direccion Ip "+Utils.Utils.IPToString(getw)+" no se encuentra en la topologia");
         }else{
             newIP = gateway.findNext();
             if(newIP == null){

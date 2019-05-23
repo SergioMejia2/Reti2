@@ -71,11 +71,11 @@ public class DHCPServer {
                         while (listening) {
                                 socket.receive(p); //throws i/o exception
                                 
-                                System.out.println("Connection established from " + p.getAddress());
-                        
-                                System.out.println("Data Received: " + Arrays.toString(p.getData()));
+//                                System.out.println("Connection established from " + p.getAddress());
+//                        
+//                                System.out.println("Data Received: " + Arrays.toString(p.getData()));
                                 mensajeDiscover = new DHCP.DHCPMessage(p.getData(), p.getLength());
-                                System.out.println("Data Parsed:   "+ Arrays.toString(mensajeDiscover.externalize()));
+//                                System.out.println("Data Parsed:   "+ Arrays.toString(mensajeDiscover.externalize()));
                                 System.out.println(mensajeDiscover);
                                 
                                 
