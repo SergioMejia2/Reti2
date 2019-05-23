@@ -23,8 +23,9 @@ public class Pool {
     private byte[] mask;
     private long hostDisp;
     private ArrayList<byte[]> asignadas;
+    private int time;
 
-    public Pool(byte[] redIP, byte[] gatewayIP, byte[] primerIP, byte[] ultimaIP, byte[] DNS, byte[] broadcast, byte[] mask, long hostDisp) {
+    public Pool(byte[] redIP, byte[] gatewayIP, byte[] primerIP, byte[] ultimaIP, byte[] DNS, byte[] broadcast, byte[] mask, long hostDisp, int t) {
         this.redIP = redIP;
         this.gatewayIP = gatewayIP;
         this.primerIP = primerIP;
@@ -34,6 +35,7 @@ public class Pool {
         this.mask = mask;
         this.hostDisp = hostDisp;
         asignadas = new ArrayList<byte[]>();
+        this.time = t;
     }
     
     
@@ -94,12 +96,12 @@ public class Pool {
                 
             for (byte[] asig : asignadas)
             {
-                System.out.println("asignada:"+Utils.Utils.IPToString(asig));
-                System.out.println("comparada:"+Utils.Utils.IPToString(ip));
+                //System.out.println("asignada:"+Utils.Utils.IPToString(asig));
+                //System.out.println("comparada:"+Utils.Utils.IPToString(ip));
                 
                 if(Arrays.equals(ip, asig))
                 {
-                    System.out.println("ENTRE");
+                    //System.out.println("ENTRE");
                     estaAsignado = true;
                 }
             }
@@ -114,4 +116,14 @@ public class Pool {
     public void addAsigned(byte[] ipN){
         this.asignadas.add(ipN);
     }
+
+    public int getTime() {
+        return time;
+    }
+
+    public void setTime(int time) {
+        this.time = time;
+    }
+    
+    
 }

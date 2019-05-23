@@ -93,7 +93,7 @@ public class DHCPMessage {
 		sName = new byte[64];
 		file = new byte[128];
 		options = new Hashtable<Byte,DHCPOption>();
-		this.printMessage();
+		//this.printMessage();
 	}
         
         public DHCPMessage(byte[] message, int length)
@@ -178,7 +178,7 @@ public class DHCPMessage {
             DHCPOption gatewayAddr = new DHCPOption((byte)gateway.length, gateway);
             options.put((byte)3,gatewayAddr);
             
-            byte[] lease = Utils.Utils.intToBytes(DHCPServer.LEASE_TIME);
+            byte[] lease = Utils.Utils.intToBytes(pool.getTime());
             DHCPOption leaseTime = new DHCPOption((byte)4, lease);
             options.put((byte)51,leaseTime);
             
@@ -226,7 +226,7 @@ public class DHCPMessage {
             DHCPOption gatewayAddr = new DHCPOption((byte)gateway.length, gateway);
             options.put((byte)3,gatewayAddr);
             
-            byte[] lease = Utils.Utils.intToBytes(DHCPServer.LEASE_TIME);
+            byte[] lease = Utils.Utils.intToBytes(pool.getTime());
             DHCPOption leaseTime = new DHCPOption((byte)4, lease);
             options.put((byte)51,leaseTime);
             
@@ -274,7 +274,7 @@ public class DHCPMessage {
             DHCPOption gatewayAddr = new DHCPOption((byte)gateway.length, gateway);
             options.put((byte)3,gatewayAddr);
             
-            byte[] lease = Utils.Utils.intToBytes(DHCPServer.LEASE_TIME);
+            byte[] lease = Utils.Utils.intToBytes(pool.getTime());
             DHCPOption leaseTime = new DHCPOption((byte)4, lease);
             options.put((byte)51,leaseTime);
             

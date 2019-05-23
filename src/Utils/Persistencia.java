@@ -5,13 +5,14 @@
  */
 package Utils;
 
-import DHCP.Equipo;
+import DHCP.Registro;
 import Pool.Pool;
 import Pool.PoolManager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -25,7 +26,8 @@ public class Persistencia {
 	{
 		BufferedReader br = new BufferedReader (new FileReader ("./info.txt"));
 		String linea = br.readLine();
-                
+                int time = Integer.parseInt(linea.trim());
+                linea = br.readLine();
 		while(linea != null) {
 			long hostDisponibles = Integer.parseInt(linea.trim());
 			linea = br.readLine();
@@ -43,25 +45,18 @@ public class Persistencia {
                         linea = br.readLine();
                         byte[] dnsIP = InetAddress.getByName(linea).getAddress();
                         linea = br.readLine();
-                        Pool pool = new Pool(red, gateway, primerIP, ultimaIP, dnsIP, broadcast, mask, hostDisponibles);
+                        Pool pool = new Pool(red, gateway, primerIP, ultimaIP, dnsIP, broadcast, mask, hostDisponibles, time);
                         poolmanager.addPool(pool);
                 }
 		br.close();
 	}
         
-        public static void generarLog(ArrayList<Equipo> asignados) throws Exception
+        public static void escibirLog(String line) throws Exception
 	{
-		File archivo = new File("./log.txt");
-		PrintWriter pw = new PrintWriter(archivo);
-		pw.println("LOG DE REPORTE");
-		pw.println();
-                
-                for (Equipo asignado : asignados) {
-                pw.println("MAC: "+Utils.bytesToString(asignado.getMAC()));
-                pw.println("Ip: "+Utils.IPToString(asignado.getIp()));
-                pw.println("Hora Inicio: "+asignado.getHoraInicio());
-            }
-                
-		pw.close();
-	}
+            FileWriter fw=new FileWriter("./log.txt",true);
+            PrintWriter pw = new PrintWriter(fw);
+            String linea = line;
+            pw.println(linea);
+            pw.close();
+        }
 }
