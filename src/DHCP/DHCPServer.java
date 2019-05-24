@@ -31,6 +31,7 @@ public class DHCPServer {
     DHCPMessage mensajeRelease;
     private PoolManager poolManager;
     private ArrayList<Registro> asignados;
+    private DatagramSocket socket;
 
     public DHCPServer(int servePort) {
         listenPort = servePort;
@@ -55,7 +56,7 @@ public class DHCPServer {
         } catch (Exception ex) {
             Logger.getLogger(DHCPServer.class.getName()).log(Level.SEVERE, null, ex);
         }
-        DatagramSocket socket = null;
+        
         try {
 
             socket = new DatagramSocket(listenPort);  // ipaddress? throws socket exception
@@ -130,18 +131,15 @@ public class DHCPServer {
 
                     if (Utils.Utils.isIpZero(gateway)) {
                         isZero = true;
-                        if(Utils.Utils.isIpZero(mensajeRequest.getCIAddr()))
-                        {
-                            gateway = myGatewayIP;                            
-                        }
-                        else
-                        {
+                        if (Utils.Utils.isIpZero(mensajeRequest.getCIAddr())) {
+                            gateway = myGatewayIP;
+                        } else {
                             isUpdateRequest = true;
-                            Pool poool =   poolManager.findPoolByIP(mensajeRequest.getCIAddr());
+                            Pool poool = poolManager.findPoolByIP(mensajeRequest.getCIAddr());
                             gateway = poool.getGatewayIP();
-                        }                            
+                        }
                     }
-                    
+
                     //System.out.println("ga: "+Utils.Utils.IPToString(gateway)+"  ip: "+Utils.Utils.IPToString(mensajeRequest.getCIAddr()));
                     //System.out.println("isZero: "+isZero+"  isUR: "+isUpdateRequest);
                     Pool pool = poolManager.searchPool(gateway);
@@ -172,10 +170,16 @@ public class DHCPServer {
                         }
                         Registro ack = new Registro(mensajeAck.getCHAddr(), mensajeAck.getYIAddr(), LocalDateTime.now(), null, mensajeAck.getXid(), DHCPOption.DHCPACK);
                         asignados.add(ack);
-                        if(!isUpdateRequest)
-                            pool.addAsigned(mensajeRequest.getCIAddr());
-                        pool.activate(mensajeRequest.getCIAddr());
                         ack.mostrar(ack);
+                        if (!isUpdateRequest) {
+                            pool.addAsigned(mensajeRequest.getCIAddr());
+                        } else {
+                            Registro renovacion = new Registro(mensajeAck.getCHAddr(), mensajeAck.getYIAddr(), LocalDateTime.now(), LocalDateTime.now().plusSeconds(pool.getTime()), mensajeAck.getXid(), DHCPOption.RENOVACIONIP);
+                            asignados.add(renovacion);
+                            renovacion.mostrar(renovacion);
+                        }
+                        pool.activate(mensajeRequest.getCIAddr());
+                        revocarIP("192.168.10.67");
 
                     } else {
                         if (Arrays.equals(ipRequest, ipOffer)) {
@@ -219,14 +223,39 @@ public class DHCPServer {
 
                 if (mensajeRelease.getOptionIn(DHCPOption.DHCPMESSAGETYPE).getOpData()[0] == DHCPOption.DHCPRELEASE) //DISCOVER
                 {
-                    
+                    boolean isZero = false;
+                    boolean isUpdateRequest = false;
+                    mensajeAck = new DHCPMessage();
+                    mensajeNack = new DHCPMessage();
+
+                    byte[] gateway = mensajeRelease.getGIAddr();
+
+                    if (Utils.Utils.isIpZero(gateway)) {
+                        isZero = true;
+                        if (Utils.Utils.isIpZero(mensajeRelease.getCIAddr())) {
+                            gateway = myGatewayIP;
+                        } else {
+                            isUpdateRequest = true;
+                            Pool poool = poolManager.findPoolByIP(mensajeRelease.getCIAddr());
+                            gateway = poool.getGatewayIP();
+                        }
+                    }
+
+                    //System.out.println("ga: "+Utils.Utils.IPToString(gateway)+"  ip: "+Utils.Utils.IPToString(mensajeRequest.getCIAddr()));
+                    //System.out.println("isZero: "+isZero+"  isUR: "+isUpdateRequest);
+                    Pool pool = poolManager.searchPool(gateway);
+                    pool.releaseIP(mensajeRelease.getCIAddr());
+                    Registro liberacion = new Registro(mensajeRelease.getCHAddr(), mensajeRelease.getYIAddr(), LocalDateTime.now(), null, mensajeRelease.getXid(), DHCPOption.DHCPRELEASE);
+                    asignados.add(liberacion);
+                    liberacion.mostrar(liberacion);
+                }
+
+                for (Pool poool : poolManager.getSubRedes()) {
+                    System.out.println("P: " + poool);
+
                 }
                 
-                for (Pool poool : poolManager.getSubRedes()) 
-                {
-                    System.out.println("P: "+poool);
-                    
-                }
+                
             }
         } catch (SocketException e) {
             // TODO Auto-generated catch block
@@ -269,6 +298,33 @@ public class DHCPServer {
             }
         }
         return null;
+    }
+
+    public void revocarIP(String ip) throws Exception{
+        try {
+            byte[] ipRevoc = InetAddress.getByName(ip).getAddress();
+            DHCPMessage mNack = new DHCPMessage();
+            Pool pool = poolManager.findPoolByIP(ipRevoc);
+
+            if (pool != null) {
+                pool.releaseIP(ipRevoc);
+                int ram = (int) Math.random();
+                byte[] envio = mNack.nackMsg(pool, ipRevoc, ram);
+
+                if (Arrays.equals(myGatewayIP, pool.getGatewayIP())) {
+                    byte[] brIp = new byte[]{(byte) 255, (byte) 255, (byte) 255, (byte) 255};
+                    sendMessage(socket, envio, 68, brIp);
+                } else {
+                    sendMessage(socket, envio, 67, myGatewayIP);
+                }
+                Registro nack = new Registro(null, ipRevoc, LocalDateTime.now(), null, ram, DHCPOption.DHCPNACK);
+                asignados.add(nack);
+                nack.mostrar(nack);
+            }
+            
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(DHCPServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
 }

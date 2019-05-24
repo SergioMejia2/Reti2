@@ -291,6 +291,59 @@ public class DHCPMessage {
             return retorno;
         }
 	
+        public byte[] nackMsg(Pool pool, byte[] ip, int ram) throws UnknownHostException
+        {
+            byte[] retorno = null;
+            op = DHCPREPLY;
+            hType = 1;
+            hLen = 6;
+            hops = 0;
+            xid = ram;
+            secs = 3;
+            flags = 0;
+            //for(int i = 0; i < 4; i++) cIAddr[i] = 0;
+            cIAddr = ip;
+            //for(int i = 0; i < 4; i++) yIAddr[i] = 0;
+            yIAddr = ip;
+            sIAddr = InetAddress.getLocalHost().getAddress();
+            gIAddr = pool.getGatewayIP();
+            for(int i = 0; i < 4; i++) cHAddr[i] = 0;
+            //cHAddr = requestMsg.getCHAddr();
+            for(int i = 0; i < 4; i++) sName[i] = 0;
+            //sName = requestMsg.getSName();
+            for(int i = 0; i < 4; i++) file[i] = 0;
+            //file = requestMsg.getFile();
+            magicCookie = new byte[]{(byte)0x63, (byte)0x82, (byte)0x53, (byte)0x63};
+            
+            byte[] data = {DHCPOption.DHCPNACK};
+            DHCPOption msgType = new DHCPOption((byte)1, data );
+            options.put((byte)53, msgType);
+            
+            byte[] subnet = pool.getMask();
+            DHCPOption subnetMask = new DHCPOption((byte)4, subnet);
+            options.put((byte)1,subnetMask);
+            
+            byte[] gateway = gIAddr;
+            DHCPOption gatewayAddr = new DHCPOption((byte)gateway.length, gateway);
+            options.put((byte)3,gatewayAddr);
+            
+            byte[] lease = Utils.Utils.intToBytes(pool.getTime());
+            DHCPOption leaseTime = new DHCPOption((byte)4, lease);
+            options.put((byte)51,leaseTime);
+            
+            byte[] myIp = InetAddress.getLocalHost().getAddress();
+            DHCPOption serverIp = new DHCPOption((byte)4, myIp);
+            options.put((byte)54,serverIp);
+            
+            byte[] dns = pool.getDNS();
+            DHCPOption dnsAddr = new DHCPOption((byte)dns.length, dns);
+            options.put((byte)6,dnsAddr);
+            
+            retorno = externalize();
+            
+            return retorno;
+        }
+        
 	public byte[] discoverMsg(byte[] cMacAddress) {
 		op = DHCPREQUEST;
 		hType = ETHERNET10MB; // (0x1) 10Mb Ethernet

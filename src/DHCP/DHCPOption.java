@@ -20,6 +20,7 @@ public class DHCPOption
     public static final int DHCPACK = 5;
     public static final int DHCPNACK = 6;
     public static final int DHCPRELEASE = 7;
+    public static final int RENOVACIONIP = 10;
 	
     //DHCP Option Identifiers
     public static final int DHCPMESSAGETYPE = 53;

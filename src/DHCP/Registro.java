@@ -15,7 +15,7 @@ import java.util.logging.Logger;
  * @author julia
  */
 public class Registro {
-    
+
     private byte[] MAC;
     private byte[] ip;
     private int xid;
@@ -31,7 +31,7 @@ public class Registro {
         this.horaInicio = horaInicio;
         this.horaRevocacion = horaRevocacion;
     }
-    
+
     public Registro(byte[] MAC, byte[] ip, int xid, int messageType) {
         this.MAC = MAC;
         this.ip = ip;
@@ -44,10 +44,11 @@ public class Registro {
     public byte[] getMAC() {
         return MAC;
     }
-    
+
     public int getXid() {
         return xid;
     }
+
     public byte[] getIp() {
         return ip;
     }
@@ -63,56 +64,82 @@ public class Registro {
     int getMessageType() {
         return this.messageType;
     }
-    
-    public void mostrar(Registro rr){
-        
-        byte[] aux = Arrays.copyOfRange(rr.getMAC(),0,6);
+
+    public void mostrar(Registro rr) {
+        byte[] aux = null;
+        if (rr.getMAC() != null) {
+            aux = Arrays.copyOfRange(rr.getMAC(), 0, 6);
+        }
         String msg;
-        if(rr.getMessageType() == 1){
-            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"} "+" - "+"DHCPDISCOVER"+" - MAC: "+Utils.Utils.bytesToString(aux);
+        if (rr.getMessageType() == 1) {
+            msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "DHCPDISCOVER" + " - MAC: " + Utils.Utils.bytesToString(aux);
             System.out.println(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {
                 Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }else if(rr.getMessageType() == 2){
-            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"} "+" - "+"DHCPOFFER"+" - MAC: "+Utils.Utils.bytesToString(aux)+" - "+Utils.Utils.IPToString(rr.getIp())+" - Arrendado hasta: "+rr.getHoraRevocacion();
+        } else if (rr.getMessageType() == 2) {
+            msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "DHCPOFFER" + " - MAC: " + Utils.Utils.bytesToString(aux) + " - " + Utils.Utils.IPToString(rr.getIp()) + " - Arrendado desde: " + rr.getHoraInicio() + " - hasta: " + rr.getHoraRevocacion();
             System.out.println(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {
                 Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
             }
-        }else if(rr.getMessageType() == 3){
-            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"} "+" - "+"DHCPREQUEST"+" - MAC: "+Utils.Utils.bytesToString(aux)+" - "+Utils.Utils.IPToString(rr.getIp());
+        } else if (rr.getMessageType() == 3) {
+            msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "DHCPREQUEST" + " - MAC: " + Utils.Utils.bytesToString(aux) + " - " + Utils.Utils.IPToString(rr.getIp());
             System.out.println(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {
                 Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
-        }else if(rr.getMessageType() == 5){
-            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"} "+" - "+"DHCPACK"+" - MAC: "+Utils.Utils.bytesToString(aux)+" - "+Utils.Utils.IPToString(rr.getIp());
+
+        } else if (rr.getMessageType() == 5) {
+            msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "DHCPACK" + " - MAC: " + Utils.Utils.bytesToString(aux) + " - " + Utils.Utils.IPToString(rr.getIp());
             System.out.println(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {
                 Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
-        }else if(rr.getMessageType() == 6){
-            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"]} "+" - "+"DHCPNACK"+" - MAC: "+Utils.Utils.bytesToString(aux);
+
+        } else if (rr.getMessageType() == 6) {
+            if (aux != null) {
+                msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "]} " + " - " + "DHCPNACK" + " - MAC: " + Utils.Utils.bytesToString(aux);
+                System.out.println(msg);
+                try {
+                    Utils.Persistencia.escibirLog(msg);
+                } catch (Exception ex) {
+                    Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } else {
+                msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "]} " + " - " + "DHCPNACK DE REVOCACION MANUAL";
+                System.out.println(msg);
+                try {
+                    Utils.Persistencia.escibirLog(msg);
+                } catch (Exception ex) {
+                    Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        } else if (rr.getMessageType() == 10) {
+            msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "RENOVACION DE IP" + " - MAC: " + Utils.Utils.bytesToString(aux) + " - " + Utils.Utils.IPToString(rr.getIp()) + " - Arrendado desde: " + rr.getHoraInicio() + " - hasta: " + rr.getHoraRevocacion();
             System.out.println(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {
                 Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
+        } else if (rr.getMessageType() == 7) {
+            msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "RELEALSE" + " - MAC: " + Utils.Utils.bytesToString(aux) + " - Hora de liberacion: " + rr.getHoraInicio();
+            System.out.println(msg);
+            try {
+                Utils.Persistencia.escibirLog(msg);
+            } catch (Exception ex) {
+                Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
-    
-    
+
 }
