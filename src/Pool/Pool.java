@@ -5,6 +5,7 @@
  */
 package Pool;
 
+import Utils.CountDown;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -23,6 +24,8 @@ public class Pool {
     private byte[] mask;
     private long hostDisp;
     private ArrayList<byte[]> asignadas;
+    private ArrayList<CountDown> timers;
+    
     private int time;
 
     public Pool(byte[] redIP, byte[] gatewayIP, byte[] primerIP, byte[] ultimaIP, byte[] DNS, byte[] broadcast, byte[] mask, long hostDisp, int t) {
@@ -34,7 +37,8 @@ public class Pool {
         this.broadcast = broadcast;
         this.mask = mask;
         this.hostDisp = hostDisp;
-        asignadas = new ArrayList<byte[]>();
+        asignadas = new ArrayList<>();
+        timers = new ArrayList<>();
         this.time = t;
     }
     
@@ -43,7 +47,7 @@ public class Pool {
         boolean found = false;
         
         for (byte[] asig : this.asignadas) {
-            if(ipS.equals(asig)){
+            if(Arrays.equals(ipS, asig)){
                 found = true;
             }   
         }
@@ -113,8 +117,25 @@ public class Pool {
         return null;
 }
     
-    public void addAsigned(byte[] ipN){
+    public void addAsigned(byte[] ipN)
+    {
+        CountDown cd = new CountDown(time, ipN, this);
+        this.timers.add(cd);
         this.asignadas.add(ipN);
+    }
+    
+    public void releaseIP(byte[] ipErase)
+    {
+        for (int i = 0; i < this.asignadas.size(); i++)
+        {
+            byte[] ip = this.asignadas.get(i);
+            if(Arrays.equals(ip, ipErase))
+            {
+                this.asignadas.remove(i);
+                this.timers.remove(i);
+                return;
+            }
+        }
     }
 
     public int getTime() {
@@ -124,6 +145,34 @@ public class Pool {
     public void setTime(int time) {
         this.time = time;
     }
+
+    public void activate(byte[] ipOffer)
+    {
+        for (int i = 0; i < this.asignadas.size(); i++)
+        {
+            byte[] ip = this.asignadas.get(i);
+            if(Arrays.equals(ip, ipOffer))
+            {
+                timers.get(i).activate();
+            }
+        }
+    }
+
+    public int getSize()
+    {
+        return this.asignadas.size();
+    }
+
+    @Override
+    public String toString() {
+        String envio = "";
+        envio+="tamA: "+this.asignadas.size()+"  tamT: "+this.asignadas.size()+"\n";
+        for(byte[] b : this.asignadas)
+            envio+="ip: "+Utils.Utils.IPToString(b)+" - ";
+        envio+="\n";
+        return envio;
+    }
+    
     
     
 }

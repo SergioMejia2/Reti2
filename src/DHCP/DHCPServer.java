@@ -28,6 +28,7 @@ public class DHCPServer {
     DHCPMessage mensajeRequest;
     DHCPMessage mensajeAck;
     DHCPMessage mensajeNack;
+    DHCPMessage mensajeRelease;
     private PoolManager poolManager;
     private ArrayList<Registro> asignados;
 
@@ -121,6 +122,7 @@ public class DHCPServer {
                 if (mensajeRequest.getOptionIn(DHCPOption.DHCPMESSAGETYPE).getOpData()[0] == DHCPOption.DHCPREQUEST) //DISCOVER
                 {
                     boolean isZero = false;
+                    boolean isUpdateRequest = false;
                     mensajeAck = new DHCPMessage();
                     mensajeNack = new DHCPMessage();
 
@@ -128,8 +130,20 @@ public class DHCPServer {
 
                     if (Utils.Utils.isIpZero(gateway)) {
                         isZero = true;
-                        gateway = myGatewayIP;
+                        if(Utils.Utils.isIpZero(mensajeRequest.getCIAddr()))
+                        {
+                            gateway = myGatewayIP;                            
+                        }
+                        else
+                        {
+                            isUpdateRequest = true;
+                            Pool poool =   poolManager.findPoolByIP(mensajeRequest.getCIAddr());
+                            gateway = poool.getGatewayIP();
+                        }                            
                     }
+                    
+                    //System.out.println("ga: "+Utils.Utils.IPToString(gateway)+"  ip: "+Utils.Utils.IPToString(mensajeRequest.getCIAddr()));
+                    //System.out.println("isZero: "+isZero+"  isUR: "+isUpdateRequest);
                     Pool pool = poolManager.searchPool(gateway);
 
                     byte[] ipRequest;
@@ -158,11 +172,21 @@ public class DHCPServer {
                         }
                         Registro ack = new Registro(mensajeAck.getCHAddr(), mensajeAck.getYIAddr(), LocalDateTime.now(), null, mensajeAck.getXid(), DHCPOption.DHCPACK);
                         asignados.add(ack);
+                        if(!isUpdateRequest)
+                            pool.addAsigned(mensajeRequest.getCIAddr());
+                        pool.activate(mensajeRequest.getCIAddr());
                         ack.mostrar(ack);
 
                     } else {
                         if (Arrays.equals(ipRequest, ipOffer)) {
-                            Registro request = new Registro(mensajeRequest.getCHAddr(), mensajeRequest.getOptionIn(50).getOpData(), LocalDateTime.now(), null, mensajeRequest.getXid(), DHCPOption.DHCPREQUEST);
+                            byte[] ipRequest2;
+                            DHCPOption data2 = mensajeRequest.getOptionIn(50);
+                            if (data != null) {
+                                ipRequest2 = data2.getOpData();
+                            } else {
+                                ipRequest2 = mensajeRequest.getCIAddr();
+                            }
+                            Registro request = new Registro(mensajeRequest.getCHAddr(), ipRequest2, LocalDateTime.now(), null, mensajeRequest.getXid(), DHCPOption.DHCPREQUEST);
                             asignados.add(request);
                             request.mostrar(request);
                             byte[] envio = mensajeAck.ackMsg(mensajeRequest, pool, ipOffer);
@@ -173,6 +197,7 @@ public class DHCPServer {
                                 sendMessage(socket, envio, 67, gateway);
                             }
                             Registro ack = new Registro(mensajeAck.getCHAddr(), mensajeAck.getYIAddr(), LocalDateTime.now(), null, mensajeAck.getXid(), DHCPOption.DHCPACK);
+                            pool.activate(ipOffer);
                             asignados.add(ack);
                             ack.mostrar(ack);
 
@@ -189,6 +214,18 @@ public class DHCPServer {
                             nack.mostrar(nack);
                         }
                     }
+                }
+                mensajeRelease = new DHCP.DHCPMessage(p.getData(), p.getLength());
+
+                if (mensajeRelease.getOptionIn(DHCPOption.DHCPMESSAGETYPE).getOpData()[0] == DHCPOption.DHCPRELEASE) //DISCOVER
+                {
+                    
+                }
+                
+                for (Pool poool : poolManager.getSubRedes()) 
+                {
+                    System.out.println("P: "+poool);
+                    
                 }
             }
         } catch (SocketException e) {

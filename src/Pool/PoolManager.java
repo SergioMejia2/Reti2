@@ -78,6 +78,7 @@ public class PoolManager {
         }
         else{
             boolean asignada = gateway.searchIP(ipB);
+            
             if(asignada){
                 newip = asignarIP(getw);
             }

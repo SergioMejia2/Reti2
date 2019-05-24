@@ -66,10 +66,10 @@ public class Registro {
     
     public void mostrar(Registro rr){
         
-        byte[] aux = Arrays.copyOfRange(rr.getMAC(),0,4);
+        byte[] aux = Arrays.copyOfRange(rr.getMAC(),0,6);
         String msg;
         if(rr.getMessageType() == 1){
-            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"] "+" - "+"DHCPDISCOVER"+" - "+Utils.Utils.bytesToString(aux);
+            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"} "+" - "+"DHCPDISCOVER"+" - MAC: "+Utils.Utils.bytesToString(aux);
             System.out.println(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
@@ -77,7 +77,7 @@ public class Registro {
                 Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
             }
         }else if(rr.getMessageType() == 2){
-            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"] "+" - "+"DHCPOFFER"+" - "+Utils.Utils.bytesToString(aux)+" - "+Utils.Utils.IPToString(rr.getIp())+" - Arrendado hasta: "+rr.getHoraRevocacion();
+            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"} "+" - "+"DHCPOFFER"+" - MAC: "+Utils.Utils.bytesToString(aux)+" - "+Utils.Utils.IPToString(rr.getIp())+" - Arrendado hasta: "+rr.getHoraRevocacion();
             System.out.println(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
@@ -85,7 +85,7 @@ public class Registro {
                 Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
             }
         }else if(rr.getMessageType() == 3){
-            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"] "+" - "+"DHCPREQUEST"+" - "+Utils.Utils.bytesToString(aux)+" - "+Utils.Utils.IPToString(rr.getIp());
+            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"} "+" - "+"DHCPREQUEST"+" - MAC: "+Utils.Utils.bytesToString(aux)+" - "+Utils.Utils.IPToString(rr.getIp());
             System.out.println(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
@@ -94,7 +94,7 @@ public class Registro {
             }
             
         }else if(rr.getMessageType() == 5){
-            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"] "+" - "+"DHCPACK"+" - "+Utils.Utils.bytesToString(aux)+" - "+Utils.Utils.IPToString(rr.getIp());
+            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"} "+" - "+"DHCPACK"+" - MAC: "+Utils.Utils.bytesToString(aux)+" - "+Utils.Utils.IPToString(rr.getIp());
             System.out.println(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
@@ -103,7 +103,7 @@ public class Registro {
             }
             
         }else if(rr.getMessageType() == 6){
-            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"] "+" - "+"DHCPNACK"+" - "+Utils.Utils.bytesToString(aux);
+            msg="["+rr.getHoraInicio()+"] "+" {"+rr.getXid()+"]} "+" - "+"DHCPNACK"+" - MAC: "+Utils.Utils.bytesToString(aux);
             System.out.println(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
