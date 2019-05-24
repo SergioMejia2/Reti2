@@ -65,7 +65,7 @@ public class Registro {
         return this.messageType;
     }
 
-    public void mostrar(Registro rr) {
+    public void mostrar(Registro rr, FXMLDocumentController control) {
         byte[] aux = null;
         if (rr.getMAC() != null) {
             aux = Arrays.copyOfRange(rr.getMAC(), 0, 6);
@@ -74,6 +74,7 @@ public class Registro {
         if (rr.getMessageType() == 1) {
             msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "DHCPDISCOVER" + " - MAC: " + Utils.Utils.bytesToString(aux);
             System.out.println(msg);
+            control.update(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {
@@ -82,6 +83,7 @@ public class Registro {
         } else if (rr.getMessageType() == 2) {
             msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "DHCPOFFER" + " - MAC: " + Utils.Utils.bytesToString(aux) + " - " + Utils.Utils.IPToString(rr.getIp()) + " - Arrendado desde: " + rr.getHoraInicio() + " - hasta: " + rr.getHoraRevocacion();
             System.out.println(msg);
+            control.update(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {
@@ -90,6 +92,7 @@ public class Registro {
         } else if (rr.getMessageType() == 3) {
             msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "DHCPREQUEST" + " - MAC: " + Utils.Utils.bytesToString(aux) + " - " + Utils.Utils.IPToString(rr.getIp());
             System.out.println(msg);
+            control.update(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {
@@ -99,6 +102,7 @@ public class Registro {
         } else if (rr.getMessageType() == 5) {
             msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "DHCPACK" + " - MAC: " + Utils.Utils.bytesToString(aux) + " - " + Utils.Utils.IPToString(rr.getIp());
             System.out.println(msg);
+            control.update(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {
@@ -109,14 +113,16 @@ public class Registro {
             if (aux != null) {
                 msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "]} " + " - " + "DHCPNACK" + " - MAC: " + Utils.Utils.bytesToString(aux);
                 System.out.println(msg);
+                control.update(msg);
                 try {
                     Utils.Persistencia.escibirLog(msg);
                 } catch (Exception ex) {
                     Logger.getLogger(Registro.class.getName()).log(Level.SEVERE, null, ex);
                 }
             } else {
-                msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "]} " + " - " + "DHCPNACK DE REVOCACION MANUAL";
+                msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "DHCPNACK DE REVOCACION MANUAL";
                 System.out.println(msg);
+                control.update(msg);
                 try {
                     Utils.Persistencia.escibirLog(msg);
                 } catch (Exception ex) {
@@ -126,6 +132,7 @@ public class Registro {
         } else if (rr.getMessageType() == 10) {
             msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "RENOVACION DE IP" + " - MAC: " + Utils.Utils.bytesToString(aux) + " - " + Utils.Utils.IPToString(rr.getIp()) + " - Arrendado desde: " + rr.getHoraInicio() + " - hasta: " + rr.getHoraRevocacion();
             System.out.println(msg);
+            control.update(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {
@@ -134,6 +141,7 @@ public class Registro {
         } else if (rr.getMessageType() == 7) {
             msg = "[" + rr.getHoraInicio() + "] " + " {" + rr.getXid() + "} " + " - " + "RELEALSE" + " - MAC: " + Utils.Utils.bytesToString(aux) + " - Hora de liberacion: " + rr.getHoraInicio();
             System.out.println(msg);
+            control.update(msg);
             try {
                 Utils.Persistencia.escibirLog(msg);
             } catch (Exception ex) {

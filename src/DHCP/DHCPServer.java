@@ -16,7 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.time.LocalDateTime;
 
-public class DHCPServer {
+public class DHCPServer extends Thread {
 
     private static final int MAX_BUFFER_SIZE = 1024; // 1024 bytes
     private int listenPort = 67;//1337;
@@ -32,19 +32,12 @@ public class DHCPServer {
     private PoolManager poolManager;
     private ArrayList<Registro> asignados;
     private DatagramSocket socket;
+    private FXMLDocumentController controlador;
 
-    public DHCPServer(int servePort) {
-        listenPort = servePort;
 
+    public DHCPServer(FXMLDocumentController control) throws Exception {
         try {
-            new DHCPServer();
-        } catch (Exception ex) {
-            Logger.getLogger(DHCPServer.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public DHCPServer() throws Exception {
-        try {
+            controlador = control;
             poolManager = new PoolManager();
             asignados = new ArrayList<Registro>();
             byte[] ipServer = InetAddress.getLocalHost().getAddress();
@@ -56,11 +49,24 @@ public class DHCPServer {
         } catch (Exception ex) {
             Logger.getLogger(DHCPServer.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         try {
 
             socket = new DatagramSocket(listenPort);  // ipaddress? throws socket exception
 
+        } catch (SocketException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void run() {
+        try {
             byte[] payload = new byte[MAX_BUFFER_SIZE];
             int length = 600;
             DatagramPacket p = new DatagramPacket(payload, length);
@@ -83,7 +89,7 @@ public class DHCPServer {
                 {
                     Registro nuevo = new Registro(mensajeDiscover.getCHAddr(), mensajeDiscover.getYIAddr(), LocalDateTime.now(), null, mensajeDiscover.getXid(), DHCPOption.DHCPDISCOVER);
                     asignados.add(nuevo);
-                    nuevo.mostrar(nuevo);
+                    nuevo.mostrar(nuevo, controlador);
 
                     boolean isZero = false;
                     try {
@@ -104,7 +110,7 @@ public class DHCPServer {
 
                         nuevo = new Registro(mensajeOffer.getCHAddr(), mensajeOffer.getYIAddr(), LocalDateTime.now(), LocalDateTime.now().plusSeconds(pool.getTime()), mensajeOffer.getXid(), DHCPOption.DHCPOFFER);
                         asignados.add(nuevo);
-                        nuevo.mostrar(nuevo);
+                        nuevo.mostrar(nuevo, controlador);
 
                         if (isZero) {
                             byte[] brIp = new byte[]{(byte) 255, (byte) 255, (byte) 255, (byte) 255};
@@ -159,7 +165,7 @@ public class DHCPServer {
                     if (ipOffer == null) {
                         Registro request = new Registro(mensajeRequest.getCHAddr(), mensajeRequest.getCIAddr(), LocalDateTime.now(), null, mensajeRequest.getXid(), DHCPOption.DHCPREQUEST);
                         asignados.add(request);
-                        request.mostrar(request);
+                        request.mostrar(request, controlador);
 
                         byte[] envio = mensajeAck.ackMsg(mensajeRequest, pool, mensajeRequest.getCIAddr());
                         if (isZero) {
@@ -170,16 +176,15 @@ public class DHCPServer {
                         }
                         Registro ack = new Registro(mensajeAck.getCHAddr(), mensajeAck.getYIAddr(), LocalDateTime.now(), null, mensajeAck.getXid(), DHCPOption.DHCPACK);
                         asignados.add(ack);
-                        ack.mostrar(ack);
+                        ack.mostrar(ack, controlador);
                         if (!isUpdateRequest) {
                             pool.addAsigned(mensajeRequest.getCIAddr());
                         } else {
                             Registro renovacion = new Registro(mensajeAck.getCHAddr(), mensajeAck.getYIAddr(), LocalDateTime.now(), LocalDateTime.now().plusSeconds(pool.getTime()), mensajeAck.getXid(), DHCPOption.RENOVACIONIP);
                             asignados.add(renovacion);
-                            renovacion.mostrar(renovacion);
+                            renovacion.mostrar(renovacion, controlador);
                         }
                         pool.activate(mensajeRequest.getCIAddr());
-                        revocarIP("192.168.10.67");
 
                     } else {
                         if (Arrays.equals(ipRequest, ipOffer)) {
@@ -192,7 +197,7 @@ public class DHCPServer {
                             }
                             Registro request = new Registro(mensajeRequest.getCHAddr(), ipRequest2, LocalDateTime.now(), null, mensajeRequest.getXid(), DHCPOption.DHCPREQUEST);
                             asignados.add(request);
-                            request.mostrar(request);
+                            request.mostrar(request, controlador);
                             byte[] envio = mensajeAck.ackMsg(mensajeRequest, pool, ipOffer);
                             if (isZero) {
                                 byte[] brIp = new byte[]{(byte) 255, (byte) 255, (byte) 255, (byte) 255};
@@ -203,7 +208,7 @@ public class DHCPServer {
                             Registro ack = new Registro(mensajeAck.getCHAddr(), mensajeAck.getYIAddr(), LocalDateTime.now(), null, mensajeAck.getXid(), DHCPOption.DHCPACK);
                             pool.activate(ipOffer);
                             asignados.add(ack);
-                            ack.mostrar(ack);
+                            ack.mostrar(ack, controlador);
 
                         } else {
                             byte[] envio = mensajeNack.nackMsg(mensajeRequest, pool);
@@ -215,7 +220,7 @@ public class DHCPServer {
                             }
                             Registro nack = new Registro(mensajeNack.getCHAddr(), mensajeNack.getYIAddr(), LocalDateTime.now(), null, mensajeNack.getXid(), DHCPOption.DHCPNACK);
                             asignados.add(nack);
-                            nack.mostrar(nack);
+                            nack.mostrar(nack, controlador);
                         }
                     }
                 }
@@ -247,42 +252,22 @@ public class DHCPServer {
                     pool.releaseIP(mensajeRelease.getCIAddr());
                     Registro liberacion = new Registro(mensajeRelease.getCHAddr(), mensajeRelease.getYIAddr(), LocalDateTime.now(), null, mensajeRelease.getXid(), DHCPOption.DHCPRELEASE);
                     asignados.add(liberacion);
-                    liberacion.mostrar(liberacion);
+                    liberacion.mostrar(liberacion, controlador);
                 }
 
                 for (Pool poool : poolManager.getSubRedes()) {
                     System.out.println("P: " + poool);
 
                 }
-                
-                
-            }
-        } catch (SocketException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
 
+                //revocarIP("192.168.10.67");
+            }
+        } catch (Exception ex) {
+
+            Logger.getLogger(DHCPServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-        DHCPServer server;
-        if (args.length >= 1) {
-            server = new DHCPServer(Integer.parseInt(args[0]));
-        } else {
-            try {
-                server = new DHCPServer();
-            } catch (Exception ex) {
-                Logger.getLogger(DHCPServer.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-    }
 
     public void sendMessage(DatagramSocket socket, byte[] envio, int port, byte[] ip) throws IOException {
         DatagramPacket packet = new DatagramPacket(envio, envio.length, InetAddress.getByAddress(ip), port);
@@ -300,7 +285,7 @@ public class DHCPServer {
         return null;
     }
 
-    public void revocarIP(String ip) throws Exception{
+    public void revocarIP(String ip) throws Exception {
         try {
             byte[] ipRevoc = InetAddress.getByName(ip).getAddress();
             DHCPMessage mNack = new DHCPMessage();
@@ -308,7 +293,7 @@ public class DHCPServer {
 
             if (pool != null) {
                 pool.releaseIP(ipRevoc);
-                int ram = (int) Math.random();
+                int ram = (int)(Math.random()*1e9);
                 byte[] envio = mNack.nackMsg(pool, ipRevoc, ram);
 
                 if (Arrays.equals(myGatewayIP, pool.getGatewayIP())) {
@@ -319,9 +304,9 @@ public class DHCPServer {
                 }
                 Registro nack = new Registro(null, ipRevoc, LocalDateTime.now(), null, ram, DHCPOption.DHCPNACK);
                 asignados.add(nack);
-                nack.mostrar(nack);
+                nack.mostrar(nack, controlador);
             }
-            
+
         } catch (UnknownHostException ex) {
             Logger.getLogger(DHCPServer.class.getName()).log(Level.SEVERE, null, ex);
         }
